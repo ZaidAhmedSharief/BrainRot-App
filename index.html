@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cabin:ital,wght@0,400..700;1,400..700&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+  <title>BrainRot</title>
+  <style>
+    /* Styles for the bar graph */
+    body {
+      font-family: Dm Sans, sans-serif;
+    }
+
+    .bar-container {
+      width: 80%;
+      margin: 20px auto;
+      background-color: rgb(234, 234, 234);
+      border-radius: 20px;
+      padding: 20px;
+    }
+
+    .bar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .bar-name {
+      width: 300px;
+      font-weight: bolder;
+      margin-right: 20px;
+    }
+
+    .bar-graph {
+      height: 50px;
+      border-radius: 10px;
+      text-align: right;
+      padding: 10px;
+      color: white;
+      font-family: Dm Sans, sans-serif;
+    }
+
+    .total-time {
+      text-align: center;
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 2em;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="font-family: Dm Sans, sans-serif; font-weight: bold; text-align: center;">BrainRot Test 101</h1>
+  <div id="barGraph" class="bar-container"></div>
+  <div id="totalTime" class="total-time"></div> <!-- Total time container -->
+
+  <script>
+    // Colors for each bar
+    const barColors = ['#41da3c', '#e74c3c', '#3498db', '#f1c40f', '#8e44ad', '#2ecc71'];
+
+    // Fetch data from activities.json
+    fetch('activities.json')
+      .then(response => response.json())
+      .then(data => {
+        const combinedData = combineAppTimes(data.activities);
+        const totalTimeSpent = displayData(combinedData);
+        displayTotalTime(totalTimeSpent);
+      })
+      .catch(error => console.error('Error fetching data:', error));
+
+    // Function to calculate total time in seconds for each activity
+    function calculateTotalTime(timeEntries) {
+      let totalTimeInSeconds = 0;
+
+      timeEntries.forEach(entry => {
+        const startTime = new Date(entry.start_time);
+        const endTime = new Date(entry.end_time);
+
+        // Calculate the time difference in seconds
+        const timeDiff = (endTime - startTime) / 1000; // Difference in seconds
+        totalTimeInSeconds += timeDiff;
+      });
+
+      // Convert the total time to hours (for display purposes)
+      return totalTimeInSeconds / 3600; // Time in hours
+    }
+
+    // Function to combine time entries for the same app
+    function combineAppTimes(activities) {
+      const appTimeMap = {};
+
+      activities.forEach(activity => {
+        // Extract the app name (assuming the app name comes last in the activity name)
+        const appName = extractAppName(activity.name);
+
+        if (!appTimeMap[appName]) {
+          appTimeMap[appName] = [];
+        }
+
+        // Add time entries to the app's time entries
+        appTimeMap[appName] = appTimeMap[appName].concat(activity.time_entries);
+      });
+
+      // Convert the appTimeMap to an array of objects {name, time_entries}
+      return Object.keys(appTimeMap).map(appName => ({
+        name: appName,
+        time_entries: appTimeMap[appName]
+      }));
+    }
+
+    // Function to extract the app name from the activity name
+    function extractAppName(activityName) {
+      // Extract the part of the string after the last " - "
+      const parts = activityName.split(' - ');
+      return parts.length > 1 ? parts[parts.length - 1] : activityName; // Last part is the app name
+    }
+
+    // Function to display the data
+    function displayData(activities) {
+      const barGraphContainer = document.getElementById('barGraph');
+      let totalHours = 0;
+
+      activities.forEach((activity, index) => {
+        const totalTimeSpent = calculateTotalTime(activity.time_entries);
+        totalHours += totalTimeSpent; // Accumulate total hours
+
+        // Create a div for each bar
+        const barDiv = document.createElement('div');
+        barDiv.classList.add('bar');
+
+        // Create the activity name label
+        const activityNameDiv = document.createElement('div');
+        activityNameDiv.classList.add('bar-name');
+        activityNameDiv.textContent = activity.name;
+
+        // Create the bar graph div
+        const barGraphDiv = document.createElement('div');
+        barGraphDiv.classList.add('bar-graph');
+        barGraphDiv.style.width = `${totalTimeSpent * 50}px`; // Width proportional to time spent
+        barGraphDiv.style.backgroundColor = barColors[index % barColors.length]; // Cycle through colors
+        barGraphDiv.textContent = `${totalTimeSpent.toFixed(2)} hrs`;
+
+        // Append the name and the bar graph to the bar div
+        barDiv.appendChild(activityNameDiv);
+        barDiv.appendChild(barGraphDiv);
+
+        // Append the bar div to the container
+        barGraphContainer.appendChild(barDiv);
+      });
+
+      // Return the total time spent
+      return totalHours;
+    }
+
+    // Function to display the total time spent
+    function displayTotalTime(totalTimeSpent) {
+      const totalTimeContainer = document.getElementById('totalTime');
+      totalTimeContainer.textContent = `Total Time Spent: ${totalTimeSpent.toFixed(2)} hrs`;
+    }
+  </script>
+</body>
+</html>
