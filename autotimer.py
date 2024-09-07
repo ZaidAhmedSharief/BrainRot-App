@@ -11,8 +11,7 @@ if sys.platform in ['Windows', 'win32', 'cygwin']:
 elif sys.platform in ['Mac', 'darwin', 'os2', 'os2emx']:
     from AppKit import NSWorkspace
     from Foundation import *
-elif sys.platform in ['linux', 'linux2']:
-    import linux as l
+
 
 active_window_name = ""
 activity_name = ""
